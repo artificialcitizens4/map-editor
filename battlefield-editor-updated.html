@@ -1097,6 +1097,8 @@
                         },
                         '*'
                     );
+                    console.log(data)
+                    return
                     if (data) {
                         const blob = new Blob([data], { type: 'application/json' });
                         const url = URL.createObjectURL(blob);
