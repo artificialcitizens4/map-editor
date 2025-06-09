@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procedural Battlefield Map Editor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            overflow: hidden;
+            background: #F5F3F0;
+            color: #4A6B5C;
+        }
+        
+        #canvas-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #controls {
+            width: 400px;
+            background: #FFFFFF;
+            padding: 20px;
+            overflow-y: auto;
+            height: 100vh;
+            box-sizing: border-box;
+            border-left: 1px solid #E8E5E0;
+        }
+        
+        .control-section {
+            background: #F9F7F4;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 16px;
+            border: 1px solid #E8E5E0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        
+        .control-section h3 {
+            margin-top: 0;
+            margin-bottom: 16px;
+            color: #4A6B5C;
+            border-bottom: 1px solid #E8E5E0;
+            padding-bottom: 12px;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        label {
+            display: block;
+            margin: 16px 0 8px;
+            font-size: 14px;
+            color: #4A6B5C;
+            font-weight: 500;
+        }
+        
+        input[type="number"],
+        input[type="text"],
+        input[type="color"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            border: 2px solid #E8E5E0;
+            border-radius: 12px;
+            background: #FFFFFF;
+            color: #4A6B5C;
+            box-sizing: border-box;
+            font-family: inherit;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        input[type="number"]:focus,
+        input[type="text"]:focus,
+        input[type="color"]:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #7BC4A4;
+            box-shadow: 0 0 0 3px rgba(123, 196, 164, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        input[type="number"]:hover,
+        input[type="text"]:hover,
+        select:hover {
+            border-color: #C5D9CE;
+        }
+        
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%234A6B5C' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 12px center;
+            background-repeat: no-repeat;
+            background-size: 16px;
+            padding-right: 40px;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #E8E5E0;
+            outline: none;
+            margin: 16px 0;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-track {
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(to right, #E8E5E0 0%, #C5D9CE 50%, #7BC4A4 100%);
+            border-radius: 4px;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #FFFFFF;
+            border: 3px solid #7BC4A4;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(123, 196, 164, 0.3);
+            transition: all 0.2s ease;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(123, 196, 164, 0.4);
+        }
+        
+        input[type="range"]::-webkit-slider-thumb:active {
+            transform: scale(0.95);
+        }
+        
+        input[type="range"]::-moz-range-track {
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(to right, #E8E5E0 0%, #C5D9CE 50%, #7BC4A4 100%);
+            border-radius: 4px;
+            border: none;
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #FFFFFF;
+            border: 3px solid #7BC4A4;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(123, 196, 164, 0.3);
+        }
+        
+        button {
+            background: #7BC4A4;
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            width: 100%;
+            margin: 8px 0;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            box-shadow: 0 2px 8px rgba(123, 196, 164, 0.2);
+        }
+        
+        button:hover {
+            background: #6BB394;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(123, 196, 164, 0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(123, 196, 164, 0.2);
+        }
+        
+        button.danger {
+            background: #E85A4F;
+            box-shadow: 0 2px 8px rgba(232, 90, 79, 0.2);
+        }
+        
+        button.danger:hover {
+            background: #D44638;
+            box-shadow: 0 6px 16px rgba(232, 90, 79, 0.3);
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .input-group label {
+            margin: 0;
+            flex: 1;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .input-group input,
+        .input-group select {
+            flex: 2;
+            margin: 0;
+        }
+        
+        .battlefield-type {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 16px 0;
+        }
+        
+        .type-button {
+            background: #FFFFFF;
+            border: 2px solid #E8E5E0;
+            padding: 16px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-size: 13px;
+            color: #4A6B5C;
+            font-weight: 500;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .type-button:hover {
+            border-color: #7BC4A4;
+            background: #F0FBF7;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(123, 196, 164, 0.15);
+        }
+        
+        .type-button.active {
+            background: #7BC4A4;
+            border-color: #7BC4A4;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(123, 196, 164, 0.3);
+        }
+        
+        .generated-features {
+            background: #FFFFFF;
+            padding: 16px;
+            border-radius: 12px;
+            margin: 16px 0;
+            max-height: 220px;
+            overflow-y: auto;
+            border: 1px solid #E8E5E0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .feature-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            margin: 4px 0;
+            background: #F9F7F4;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #4A6B5C;
+            transition: background-color 0.2s ease;
+        }
+        
+        .feature-item:hover {
+            background: #F0FBF7;
+        }
+        
+        .feature-icon {
+            font-size: 16px;
+            margin-right: 8px;
+        }
+        
+        #status {
+            position: fixed;
+            bottom: 24px;
+            right: 440px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #4A6B5C;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            z-index: 1000;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid #E8E5E0;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+        }
+        
+        .slider-container {
+            margin: 20px 0;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: #4A6B5C;
+            font-weight: 500;
+        }
+        
+        .slider-value {
+            background: #7BC4A4;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 40px;
+            text-align: center;
+        }
+        
+        .quick-generate-section {
+            background: linear-gradient(135deg, #7BC4A4 0%, #6BB394 100%);
+            color: white;
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 8px 24px rgba(123, 196, 164, 0.2);
+        }
+        
+        .quick-generate-section h3 {
+            margin-top: 0;
+            color: white;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 12px;
+            font-weight: 600;
+            font-size: 18px;
+        }
+        
+        .quick-generate-section .type-button {
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+        
+        .quick-generate-section .type-button:hover {
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .quick-generate-section .type-button.active {
+            background: white;
+            border-color: white;
+            color: #4A6B5C;
+            box-shadow: 0 4px 16px rgba(255, 255, 255, 0.3);
+        }
+        
+        .quick-generate-section button {
+            background: white;
+            color: #4A6B5C;
+            margin-top: 16px;
+            font-weight: 700;
+            box-shadow: 0 4px 16px rgba(255, 255, 255, 0.2);
+        }
+        
+        .quick-generate-section button:hover {
+            background: #F9F7F4;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(255, 255, 255, 0.3);
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+        
+        /* Custom scrollbar for webkit browsers */
+        .generated-features::-webkit-scrollbar,
+        #controls::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .generated-features::-webkit-scrollbar-track,
+        #controls::-webkit-scrollbar-track {
+            background: #F5F3F0;
+            border-radius: 3px;
+        }
+        
+        .generated-features::-webkit-scrollbar-thumb,
+        #controls::-webkit-scrollbar-thumb {
+            background: #C5D9CE;
+            border-radius: 3px;
+        }
+        
+        .generated-features::-webkit-scrollbar-thumb:hover,
+        #controls::-webkit-scrollbar-thumb:hover {
+            background: #7BC4A4;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    <div id="controls">
+        <div class="quick-generate-section">
+            <h3>🎯 Quick Generate</h3>
+            <div class="battlefield-type">
+                <div class="type-button active" data-type="plains">🌾 Plains</div>
+                <div class="type-button" data-type="hills">🏔️ Hills</div>
+                <div class="type-button" data-type="forest">🌲 Forest</div>
+                <div class="type-button" data-type="river">🌊 River</div>
+                <div class="type-button" data-type="indoor">🏠 Indoor</div>
+            </div>
+            <button id="quickGenerate">🎲 Get Started</button>
+        </div>
+        
+        <div class="control-section">
+            <h3>🎯 Map Configuration</h3>
+            
+            <div class="input-group">
+                <label>Map Size:</label>
+                <select id="mapSize">
+                    <option value="small">Small (5x5)</option>
+                    <option value="medium" selected>Medium (10x10)</option>
+                    <option value="large">Large (15x15)</option>
+                </select>
+            </div>
+            
+            <div class="slider-container">
+                <div class="slider-label">
+                    <span>Terrain Complexity</span>
+                    <span class="slider-value" id="complexityValue">50%</span>
+                </div>
+                <input type="range" id="complexity" min="0" max="100" value="50">
+            </div>
+            
+            <div class="slider-container">
+                <div class="slider-label">
+                    <span>Strategic Zones</span>
+                    <span class="slider-value" id="zonesValue">5</span>
+                </div>
+                <input type="range" id="zoneCount" min="3" max="8" value="5">
+            </div>
+            
+            <button id="regenerateTerrain">🔄 Regenerate Terrain</button>
+            <button id="regenerateZones">🎯 Regenerate Zones</button>
+        </div>
+        
+        <div class="control-section">
+            <h3>🎯 Edit Mode</h3>
+            <div class="input-group">
+                <label>Mode:</label>
+                <select id="editMode">
+                    <option value="view">👁️ View</option>
+                    <option value="terrain">🌍 Paint Terrain</option>
+                </select>
+            </div>
+            
+            <div id="terrainControls" style="display: none;">
+                <div class="input-group">
+                    <label>Terrain:</label>
+                    <select id="terrainType">
+                        <option value="clear">Clear</option>
+                        <option value="forest">Forest</option>
+                        <option value="hills">Hills</option>
+                        <option value="water">Water</option>
+                        <option value="road">Road</option>
+                        <option value="urban">Urban</option>
+                        <option value="swamp">Swamp</option>
+                        <option value="room">Room</option>
+                        <option value="street">Street</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Brush Size:</label>
+                    <input type="number" id="brushSize" value="2" min="1" max="5">
+                </div>
+            </div>
+        </div>
+        
+        <div class="control-section">
+            <h3>📋 Generated Features</h3>
+            <div class="generated-features" id="featuresList">
+                <div class="feature-item">Generate a battlefield to see features</div>
+            </div>
+        </div>
+        
+        <div class="control-section">
+            <h3>💾 Export</h3>
+            <button id="exportJson">📄 Export JSON</button>
+            <textarea id="mapData" placeholder="Generated map data will appear here..." style="height: 100px; font-size: 10px;"></textarea>
+        </div>
+    </div>
+    
+    <div id="status">Ready - Click "Get Started" to begin your adventure</div>
+    
+    <script>
+        // Global variables
+        let hexGrid = [];
+        let battlefieldType = 'plains';
+        let mapWidth = 50;
+        let mapHeight = 40;
+        let hexSize = 15;
+        let editMode = 'view';
+        let selectedHex = null;
+        
+        // View controls
+        let viewOffset = { x: 0, y: 0 };
+        let viewScale = 1;
+        let isDragging = false;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+        
+        // Terrain colors
+        const terrainColors = {
+            clear: '#90EE90',
+            forest: '#228B22',
+            hills: '#CD853F',
+            water: '#4682B4',
+            road: '#8B7355',
+            urban: '#A9A9A9',
+            swamp: '#556B2F',
+            bridge: '#8B4513',
+            room: '#DEB887',
+            corridor: '#D2B48C',
+            carpet: '#8B4513',
+            tile: '#F5F5DC',
+            marble: '#E6E6FA'
+        };
+    
+        // Strategic zone names
+        const zoneNames = [
+            'Cemetery Hill', 'Seminary Ridge', 'Little Round Top', 'Big Round Top',
+            'Devil\'s Den', 'Peach Orchard', 'Wheatfield', 'Culp\'s Hill',
+            'Cemetery Ridge', 'McPherson Ridge', 'Oak Hill', 'Benner Hill'
+        ];
+        
+        function setup() {
+            const canvas = createCanvas(windowWidth - 400, windowHeight);
+            canvas.parent('canvas-container');
+            
+            setupEventListeners();
+            updateSliderValues();
+            noLoop();
+        }
+        
+        function draw() {
+            background('#F5F3F0');
+            
+            push();
+            translate(viewOffset.x, viewOffset.y);
+            scale(viewScale);
+            
+            // Draw hex grid
+            drawHexGrid();
+            
+            // Draw selection
+            if (selectedHex) {
+                drawHexSelection(selectedHex);
+            }
+            
+            pop();
+            
+            // Draw UI
+            drawUI();
+        }
+        
+        function drawHexGrid() {
+            const width = hexSize * Math.sqrt(3);
+            const height = hexSize * 2;
+            
+            const horzSpacing = width;
+            const vertSpacing = height * 3/4;
+            
+            for (let hex of hexGrid) {
+                const x = hex.col * horzSpacing + (hex.row % 2) * (horzSpacing/2);
+                const y = hex.row * vertSpacing;
+                
+                fill(terrainColors[hex.terrain] || terrainColors.clear);
+                stroke(255, 255, 255, 100);
+                strokeWeight(0.5 / viewScale);
+                
+                push();
+                translate(x, y);
+                drawHexagon(0, 0, hexSize);
+                pop();
+                
+                hex.screenX = x;
+                hex.screenY = y;
+            }
+        }
+        
+        function drawHexSelection(hex) {
+            push();
+            translate(hex.screenX, hex.screenY);
+            
+            noFill();
+            stroke('#7BC4A4');
+            strokeWeight(3 / viewScale);
+            drawHexagon(0, 0, hexSize);
+            
+            pop();
+        }
+        
+        function drawHexagon(x, y, size) {
+            beginShape();
+            for (let i = 0; i < 6; i++) {
+                const angle = PI / 3 * i + PI / 6;
+                const px = x + size * cos(angle);
+                const py = y + size * sin(angle);
+                vertex(px, py);
+            }
+            endShape(CLOSE);
+        }
+        
+        function drawUI() {
+            // Draw mode indicator with no background and black text
+            fill('#000000');
+            noStroke();
+            textAlign(LEFT, CENTER);
+            textSize(14);
+            textStyle(BOLD);
+            text(`Mode: ${editMode.toUpperCase()}`, 20, 25);
+        }
+        
+        function quickGenerate() {
+            const activeButton = document.querySelector('.type-button.active');
+            if (activeButton) {
+                battlefieldType = activeButton.dataset.type;
+            }
+            
+            mapWidth = 10;
+            mapHeight = 10;
+            
+            generateHexGrid();
+            generateTerrain(50);
+            
+            autoFitView();
+            updateFeaturesList();
+            updateMapData();
+            updateStatus('Your adventure begins! Battlefield generated successfully');
+            redraw();
+        }
+        
+        function generateHexGrid() {
+            hexGrid = [];
+            
+            for (let row = 0; row < mapHeight; row++) {
+                for (let col = 0; col < mapWidth; col++) {
+                    hexGrid.push({
+                        col: col,
+                        row: row,
+                        terrain: 'clear',
+                        elevation: 0,
+                        zoneId: null,
+                        screenX: 0,
+                        screenY: 0
+                    });
+                }
+            }
+        }
+        
+        function generateTerrain(complexity) {
+            const noiseScale = 0.1;
+            const complexityFactor = complexity / 100;
+            
+            for (let hex of hexGrid) {
+                const noiseValue = simpleNoise(hex.col * noiseScale, hex.row * noiseScale);
+                const distanceFromCenter = dist(hex.col, hex.row, mapWidth/2, mapHeight/2);
+                const normalizedDistance = distanceFromCenter / (Math.max(mapWidth, mapHeight) / 2);
+                
+                if (battlefieldType === 'plains') {
+                    if (noiseValue > 0.7 && complexityFactor > 0.3) {
+                        hex.terrain = 'forest';
+                    } else if (noiseValue < 0.3 && complexityFactor > 0.5) {
+                        hex.terrain = 'hills';
+                    } else {
+                        hex.terrain = 'clear';
+                    }
+                } else if (battlefieldType === 'hills') {
+                    if (noiseValue > 0.6) {
+                        hex.terrain = 'hills';
+                    } else if (noiseValue > 0.4 && complexityFactor > 0.4) {
+                        hex.terrain = 'forest';
+                    } else {
+                        hex.terrain = 'clear';
+                    }
+                } else if (battlefieldType === 'forest') {
+                    if (noiseValue > 0.4) {
+                        hex.terrain = 'forest';
+                    } else if (noiseValue < 0.2) {
+                        hex.terrain = 'clear';
+                    } else {
+                        hex.terrain = 'clear';
+                    }
+                } else if (battlefieldType === 'river') {
+                    const riverDistance = Math.abs(hex.row - mapHeight/2);
+                    if (riverDistance < 2 + noiseValue * 3) {
+                        hex.terrain = 'water';
+                    } else if (riverDistance < 4 && noiseValue > 0.6) {
+                        hex.terrain = 'swamp';
+                    } else if (noiseValue > 0.7) {
+                        hex.terrain = 'forest';
+                    } else {
+                        hex.terrain = 'clear';
+                    }
+                } else if (battlefieldType === 'indoor') {
+                    hex.terrain = 'tile';
+
+                    if (noiseValue > 0.7) {
+                        hex.terrain = 'marble';
+                    } else if (noiseValue < 0.3) {
+                        hex.terrain = 'carpet';
+                    }
+
+                    if (hex.col === Math.floor(mapWidth/2) && hex.row === Math.floor(mapHeight/2)) {
+                        generateIndoorHouse(hex.col, hex.row, Math.floor(mapWidth/4));
+                    }
+                }
+                
+                if (random() < 0.02 * complexityFactor) {
+                    hex.terrain = 'road';
+                }
+                
+                hex.elevation = Math.floor(noiseValue * 3);
+            }
+            
+            if (complexityFactor > 0.3) {
+                addUrbanAreas();
+            }
+        }
+        
+        function addUrbanAreas() {
+            const urbanCenters = random(1, 3);
+            
+            for (let i = 0; i < urbanCenters; i++) {
+                const centerCol = Math.floor(random(5, mapWidth - 5));
+                const centerRow = Math.floor(random(5, mapHeight - 5));
+                const size = Math.floor(random(3, 7));
+                
+                generateIndoorHouse(centerCol, centerRow, size);
+            }
+        }
+        
+        function generateIndoorHouse(centerCol, centerRow, size) {
+            const rooms = Math.floor(random(3, 6));
+            const usedPositions = new Set();
+            
+            const centerHex = getHex(centerCol, centerRow);
+            if (centerHex) {
+                centerHex.terrain = 'room';
+                usedPositions.add(`${centerCol},${centerRow}`);
+            }
+            
+            for (let i = 0; i < rooms - 1; i++) {
+                const startHex = getHex(centerCol + random(-size, size), centerRow + random(-size, size));
+                if (startHex && !usedPositions.has(`${startHex.col},${startHex.row}`)) {
+                    startHex.terrain = random() > 0.5 ? 'room' : 'marble';
+                    usedPositions.add(`${startHex.col},${startHex.row}`);
+                    
+                    const path = findPath(centerHex, startHex);
+                    for (let pathHex of path) {
+                        if (pathHex !== startHex && pathHex !== centerHex) {
+                            pathHex.terrain = 'corridor';
+                        }
+                    }
+                }
+            }
+        }
+        
+        function findPath(startHex, endHex) {
+            const path = [startHex];
+            let currentHex = startHex;
+            
+            while (currentHex !== endHex) {
+                const neighbors = getNeighbors(currentHex.col, currentHex.row);
+                let bestNeighbor = neighbors[0];
+                let bestDistance = Infinity;
+                
+                for (let neighbor of neighbors) {
+                    const distance = dist(neighbor.col, neighbor.row, endHex.col, endHex.row);
+                    if (distance < bestDistance) {
+                        bestDistance = distance;
+                        bestNeighbor = neighbor;
+                    }
+                }
+                
+                if (!bestNeighbor || path.includes(bestNeighbor)) break;
+                path.push(bestNeighbor);
+                currentHex = bestNeighbor;
+            }
+            
+            return path;
+        }
+        
+        function getHex(col, row) {
+            return hexGrid.find(hex => hex.col === col && hex.row === row);
+        }
+        
+        function getNeighbors(col, row) {
+            const neighbors = [];
+            const evenRowOffsets = [[-1, -1], [0, -1], [1, 0], [0, 1], [-1, 1], [-1, 0]];
+            const oddRowOffsets = [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 0]];
+            
+            const offsets = (row % 2 === 0) ? evenRowOffsets : oddRowOffsets;
+            
+            for (let [dc, dr] of offsets) {
+                const neighbor = getHex(col + dc, row + dr);
+                if (neighbor) neighbors.push(neighbor);
+            }
+            
+            return neighbors;
+        }
+        
+        function getHexAtPosition(x, y) {
+            const worldPos = screenToWorld(x, y);
+            let closestHex = null;
+            let minDistance = Infinity;
+            
+            for (let hex of hexGrid) {
+                const distance = dist(worldPos.x, worldPos.y, hex.screenX, hex.screenY);
+                if (distance < hexSize && distance < minDistance) {
+                    minDistance = distance;
+                    closestHex = hex;
+                }
+            }
+            
+            return closestHex;
+        }
+        
+        function screenToWorld(screenX, screenY) {
+            return {
+                x: (screenX - viewOffset.x) / viewScale,
+                y: (screenY - viewOffset.y) / viewScale
+            };
+        }
+        
+        function autoFitView() {
+            const hexWidth = hexSize * Math.sqrt(3);
+            const hexHeight = hexSize * 2;
+            const vertSpacing = hexHeight * 0.75;
+            const horzSpacing = hexWidth;
+            
+            const totalWidth = (mapWidth - 1) * horzSpacing + horzSpacing/2;
+            const totalHeight = (mapHeight - 1) * vertSpacing + hexHeight;
+            
+            const scaleX = (width - 40) / totalWidth;
+            const scaleY = (height - 40) / totalHeight;
+            viewScale = Math.min(scaleX, scaleY, 1);
+            
+            viewOffset.x = (width - totalWidth * viewScale) / 2;
+            viewOffset.y = (height - totalHeight * viewScale) / 2;
+        }
+        
+        function mouseMoved() {
+            redraw();
+        }
+        
+        function mousePressed() {
+            if (mouseX >= width) return;
+            
+            if (mouseButton === RIGHT) {
+                isDragging = true;
+                lastMouseX = mouseX;
+                lastMouseY = mouseY;
+                return;
+            }
+            
+            const hex = getHexAtPosition(mouseX, mouseY);
+            if (!hex) return;
+            
+            selectedHex = hex;
+            
+            if (editMode === 'terrain') {
+                paintTerrain(hex);
+            }
+            
+            redraw();
+        }
+
+        function mouseDragged() {
+            if (isDragging) {
+                viewOffset.x += mouseX - lastMouseX;
+                viewOffset.y += mouseY - lastMouseY;
+                lastMouseX = mouseX;
+                lastMouseY = mouseY;
+                redraw();
+            } else if (editMode === 'terrain') {
+                const hex = getHexAtPosition(mouseX, mouseY);
+                if (hex) {
+                    paintTerrain(hex);
+                    redraw();
+                }
+            }
+        }
+        
+        function mouseReleased() {
+            isDragging = false;
+        }
+        
+        function mouseWheel(event) {
+            if (mouseX >= width) return;
+            
+            const scaleFactor = event.delta > 0 ? 0.9 : 1.1;
+            const mouseXBefore = (mouseX - viewOffset.x) / viewScale;
+            const mouseYBefore = (mouseY - viewOffset.y) / viewScale;
+            
+            viewScale *= scaleFactor;
+            viewScale = constrain(viewScale, 0.1, 3);
+            
+            const mouseXAfter = (mouseX - viewOffset.x) / viewScale;
+            const mouseYAfter = (mouseY - viewOffset.y) / viewScale;
+            
+            viewOffset.x += (mouseXAfter - mouseXBefore) * viewScale;
+            viewOffset.y += (mouseYAfter - mouseYBefore) * viewScale;
+            
+            redraw();
+            return false;
+        }
+        
+        function paintTerrain(hex) {
+            const terrainType = document.getElementById('terrainType').value;
+            const brushSize = parseInt(document.getElementById('brushSize').value);
+            
+            hex.terrain = terrainType;
+            
+            if (brushSize > 1) {
+                const neighbors = getNeighbors(hex.col, hex.row);
+                for (let neighbor of neighbors) {
+                    if (random() < 0.7) {
+                        neighbor.terrain = terrainType;
+                    }
+                }
+                
+                if (brushSize > 2) {
+                    for (let neighbor of neighbors) {
+                        const secondLevel = getNeighbors(neighbor.col, neighbor.row);
+                        for (let secondNeighbor of secondLevel) {
+                            if (random() < 0.4) {
+                                secondNeighbor.terrain = terrainType;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        function updateFeaturesList() {
+            const featuresEl = document.getElementById('featuresList');
+            let html = '';
+            
+            const terrainStats = {};
+            for (let hex of hexGrid) {
+                terrainStats[hex.terrain] = (terrainStats[hex.terrain] || 0) + 1;
+            }
+            
+            html += '<div style="color: #4A6B5C; font-weight: bold; margin: 10px 0 5px 0;">Terrain:</div>';
+            for (let terrain in terrainStats) {
+                const count = terrainStats[terrain];
+                const percentage = Math.round((count / hexGrid.length) * 100);
+                html += `<div class="feature-item">
+                    <div style="color: ${terrainColors[terrain]}">${terrain}</div>
+                    <div style="font-size: 10px;">${percentage}%</div>
+                </div>`;
+            }
+            
+            featuresEl.innerHTML = html;
+        }
+        
+        function updateMapData() {
+            const mapData = {
+                map_dimensions: {
+                    width: mapWidth,
+                    height: mapHeight
+                },
+                hex_data: hexGrid.map(hex => {
+                    let terrainName = hex.terrain;
+                    switch(terrainName) {
+                        case 'hills': terrainName = 'Hill (Steep/Ridge)'; break;
+                        case 'forest': terrainName = 'Forest (Light)'; break;
+                        case 'urban': terrainName = 'Urban Area'; break;
+                        case 'water': terrainName = 'River (Impassable)'; break;
+                        case 'clear': terrainName = 'Clear'; break;
+                        default: terrainName = terrainName.charAt(0).toUpperCase() + terrainName.slice(1);
+                    }
+
+                    return {
+                        coord: `${hex.col},${hex.row}`,
+                        terrain: terrainName,
+                        elevation: hex.elevation || 1
+                    };
+                })
+            };
+            
+            document.getElementById('mapData').value = JSON.stringify(mapData, null, 2);
+        }
+        
+        function updateSliderValues() {
+            const complexity = document.getElementById('complexity');
+            const complexityValue = document.getElementById('complexityValue');
+            const zones = document.getElementById('zoneCount');
+            const zonesValue = document.getElementById('zonesValue');
+            
+            complexityValue.textContent = complexity.value + '%';
+            zonesValue.textContent = zones.value;
+            
+            complexity.oninput = () => complexityValue.textContent = complexity.value + '%';
+            zones.oninput = () => zonesValue.textContent = zones.value;
+        }
+        
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+            setTimeout(() => {
+                document.getElementById('status').textContent = 'Ready - Your battlefield awaits!';
+            }, 3000);
+        }
+        
+        function setupEventListeners() {
+            document.querySelectorAll('.type-button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.type-button').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    battlefieldType = btn.dataset.type;
+                });
+            });
+            
+            const quickBtn = document.getElementById('quickGenerate');
+            if (quickBtn) {
+                quickBtn.addEventListener('click', quickGenerate);
+            }
+            
+            const regenTerrainBtn = document.getElementById('regenerateTerrain');
+            if (regenTerrainBtn) {
+                regenTerrainBtn.addEventListener('click', () => {
+                    const complexity = parseInt(document.getElementById('complexity').value);
+                    generateTerrain(complexity);
+                    updateFeaturesList();
+                    updateMapData();
+                    updateStatus('Terrain regenerated - New paths await!');
+                    redraw();
+                });
+            }
+            
+            const regenZonesBtn = document.getElementById('regenerateZones');
+            if (regenZonesBtn) {
+                regenZonesBtn.addEventListener('click', () => {
+                    for (let hex of hexGrid) {
+                        hex.zoneId = null;
+                    }
+                    
+                    updateFeaturesList();
+                    updateMapData();
+                    updateStatus('Strategic zones updated!');
+                    redraw();
+                });
+            }
+            
+            const editModeSelect = document.getElementById('editMode');
+            if (editModeSelect) {
+                editModeSelect.addEventListener('change', (e) => {
+                    editMode = e.target.value;
+                    
+                    const terrainControls = document.getElementById('terrainControls');
+                    
+                    if (terrainControls) {
+                        terrainControls.style.display = editMode === 'terrain' ? 'block' : 'none';
+                    }
+                    
+                    updateStatus(`Switched to ${editMode} mode`);
+                    redraw();
+                });
+            }
+            
+            const exportJsonBtn = document.getElementById('exportJson');
+            if (exportJsonBtn) {
+                exportJsonBtn.addEventListener('click', () => {
+                    const data = document.getElementById('mapData').value;
+                    window.parent.postMessage(
+                        {
+                            type: 'MAP_GENERATION_COMPLETE',
+                            mapData: data,
+                        },
+                        '*'
+                    );
+                    if (data) {
+                        const blob = new Blob([data], { type: 'application/json' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `${battlefieldType}_battlefield_${new Date().toISOString().split('T')[0]}.json`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        updateStatus('JSON exported successfully - Adventure saved!');
+                    }
+                });
+            }
+        }
+        
+        function windowResized() {
+            resizeCanvas(windowWidth - 400, windowHeight);
+            redraw();
+        }
+        
+        function simpleNoise(x, y) {
+            const n = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+            return (n - Math.floor(n));
+        }
+    </script>
+</body>
+</html>
